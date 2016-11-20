@@ -6,6 +6,8 @@ import eslint from 'gulp-eslint'
 import del from 'del'
 import webpack from 'webpack-stream'
 import webpackConfig from './webpack.config.babel'
+import mocha from 'gulp-mocha'
+import flow from 'gulp-flowtype'
 
 const paths = {
   allSrcJs: 'src/**/*.js?(x)',
@@ -16,27 +18,32 @@ const paths = {
   gulpFile: 'gulpfile.babel.js',
   webpackFile: 'webpack.config.babel.js',
   libDir: 'lib',
-  distDir: 'dist'
-
+  distDir: 'dist',
+  allLibTests: 'lib/test/**/*.js'
 }
 
-gulp.task('clean', () => del([
-  paths.libDir,
-  paths.clientBundle
-]))
+gulp.task('main', ['test'], () => {
+  gulp.src(paths.clientEntryPoint)
+    .pipe(webpack(webpackConfig))
+    .pipe(gulp.dest(paths.distDir))
+})
 
-gulp.task('build', ['clean'], () => {
+gulp.task('test', ['build'], () => {
+  gulp.src(paths.allLibTests)
+    .pipe(mocha())
+})
+
+// Add lint action before clean, remove flow here and activate flow pipe in lint
+gulp.task('build', ['flow', 'clean'], () => {
   return gulp.src(paths.allSrcJs)
     .pipe(babel())
     .pipe(gulp.dest(paths.libDir))
 })
 
-// Add lint action before clean
-gulp.task('main', ['clean'], () => {
-  gulp.src(paths.clientEntryPoint)
-    .pipe(webpack(webpackConfig))
-    .pipe(gulp.dest(paths.distDir))
-})
+gulp.task('clean', () => del([
+  paths.libDir,
+  paths.clientBundle
+]))
 
 gulp.task('lint', () => {
   return gulp.src([
@@ -47,6 +54,16 @@ gulp.task('lint', () => {
     .pipe(eslint())
     .pipe(eslint.format())
     .pipe(eslint.failAfterError())
+// .pipe(flow({ abort: true })) // Add Flow here if lint is used
+})
+
+gulp.task('flow', () => {
+  return gulp.src([
+    paths.allSrcJs,
+    paths.gulpFile,
+    paths.webpackFile
+  ])
+    .pipe(flow({ abort: true }))
 })
 
 gulp.task('watch', () => {

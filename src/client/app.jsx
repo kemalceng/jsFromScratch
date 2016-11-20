@@ -1,25 +1,22 @@
-import 'babel-polyfill'
-
-import React, { PropTypes } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom'
+import { createStore } from 'redux'
+import { combineReducers } from 'redux-immutable'
+import { Provider } from 'react-redux'
+import dogReducer from './reducers/dog-reducer'
+import BarkMessage from './containers/bark-message'
+import BarkButton from './containers/bark-button'
 
-import Dog from '../shared/dog'
+const store = createStore(combineReducers({
+  dog: dogReducer
+}))
 
-// const browserToby = new Dog('Browser Toby')
-
-// document.querySelector('.app').innerText = browserToby.bark()
-
-const dogBark = new Dog('Browser Toby').bark()
-
-const App = props => (
-  <div>
-    The dog says:
-    {props.message}
-  </div>
+ReactDOM.render(
+  <Provider store={store}>
+    <div>
+      <BarkMessage />
+      <BarkButton />
+    </div>
+  </Provider>
+  , document.querySelector('.app')
 )
-
-App.propTypes = {
-  message: PropTypes.string.isRequired
-}
-
-ReactDOM.render(<App message={dogBark} />, document.querySelector('.app'))
